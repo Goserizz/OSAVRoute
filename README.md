@@ -20,7 +20,7 @@ OSAVRoute requires `go1.22+`.
 ## Stateless scanning
 For stateless scanning, the common usage is
 ```bash
-osavroute_dns -o <OUTPUT_DIR> -pps <PACKET_PER_SECOND> -nsend <#_SENDERS>
+osavroute_dns -o <OUTPUT_DIR> -pps <PACKET_PER_SECOND> -nsend <N_SENDERS>
 ```
 In this command, `OUTPUT_DIR` specifies the path to store output files. When scanning is finished, there will be three directors in `OUTPUT_DIR`:
 
@@ -52,7 +52,7 @@ In this command, `<INPUT_FILE>` specifies the input file containing addresses yo
 # Note
 1. OSAVRoute can automatically find your network interface and destination MAC address (MAC address of your gateway). However, you can always specify them by:
  ```bash
-    osavroute_dns -o <OUTPUT_DIR> -pps <PACKET_PER_SECOND> -nsend <#_SENDERS> -iface <NETWORK_INTERFACE> -dmac <DEST_MAC>
+    osavroute_dns -o <OUTPUT_DIR> -pps <PACKET_PER_SECOND> -nsend <N_SENDERS> -iface <NETWORK_INTERFACE> -dmac <DEST_MAC>
  ```
 2. The ADNS is also required when performing early-filtering scanning and blocking granularity scanning. The setup of the ADNS will not be specified here.
 3. Early-filtering and blocking granularity scanning is based on DNS, and OSAVRoute with TCP cannot run them.
