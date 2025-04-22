@@ -32,7 +32,11 @@ In this command, `OUTPUT_DIR` specifies the path to store output files. When sca
 
 `<PACKET_PER_SECOND>` is the sending rate you control. `<N_SENDERS>` is the number of goroutines used for sending packets. Larger `<PACKET_PER_SECOND>` requires larger `<N_SENDERS>`.
 
-If you are using OSAVRoute with TCP, it is totally the same as DNS, except it stores response messages in `OUTPUT_DIR/tcp`.
+To use OSAVRoute with TCP, execute the following command:
+```bash
+osavroute_tcp -o <OUTPUT_DIR> -r <REMOTE_PORT> -pps <PACKET_PER_SECOND> -nsend <N_SENDERS>
+```
+The output format is similar to `osavroute_dns`; however, `osavroute_tcp` stores response messages in the `OUTPUT_DIR/tcp` directory rather than `OUTPUT_DIR/dns`. Furthermore, specification of the target TCP port via the -r `<REMOTE_PORT>` option is required.
 
 ## Early-filtering scanning
 For early-filtering scanning, the common usage is
