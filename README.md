@@ -30,6 +30,8 @@ In this command, `OUTPUT_DIR` specifies the path to store output files. When sca
 
 - `OUTPUT_DIR/icmp-re` stores ICMP Time-Exceeds messages received. Each line in each file is `<ORG_ADDR>,<FD_ADDR>,<RESP_ADDR>,<TTL>`. `<FD_ADDR>` is the destination address when the probing packet's TTL decreases to 0. `<TTL>` is the TTL of the initial probing packet.
 
+`<PACKET_PER_SECOND>` is the sending rate you control. `<N_SENDERS>` is the number of goroutines used for sending packets. Larger `<PACKET_PER_SECOND>` requires larger `<N_SENDERS>`.
+
 If you are using OSAVRoute with TCP, it is totally the same as DNS, except it stores response messages in `OUTPUT_DIR/tcp`.
 
 ## Early-filtering scanning
@@ -59,4 +61,8 @@ In this command, `<INPUT_FILE>` specifies the input file containing addresses yo
 4. For more details, you can run
  ```bash
     osavroute_dns -h
+ ```
+ or
+ ```bash
+    osavroute_tcp -h
  ```
