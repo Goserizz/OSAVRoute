@@ -159,8 +159,6 @@ func (p *DNSPoolSpoofAny) send() {
 		}
 
 		// Complete IPv4 Header
-		// Invert the last bit of dstIp to get srcIp
-
 		dstIpHigh := uint32(binary.BigEndian.Uint16(dstIp[0:2]))
 		dstIpLow := uint32(binary.BigEndian.Uint16(dstIp[2:4]))
 		srcIpHigh := uint32(binary.BigEndian.Uint16(srcIp[0:2]))

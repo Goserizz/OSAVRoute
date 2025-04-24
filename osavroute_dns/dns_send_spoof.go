@@ -201,8 +201,5 @@ func (p *DNSPoolSpoof) GetIcmp() (
 	string,
 	uint8,
 ) {
-	// Implementation of GetIcmp method
-	// This method should return three values: string, string, uint8
-	// You can implement the logic to return these values based on your requirements
 	return "", "", 0
 }

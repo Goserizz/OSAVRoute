@@ -193,7 +193,7 @@ func (p *DNSPoolTtl) send() {
 }
 
 func (p *DNSPoolTtl) recvIcmp() {
-	// 创建原始套接字
+	// Create raw socket
 	fd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
 	if err != nil {
 		panic(err)
@@ -205,14 +205,14 @@ func (p *DNSPoolTtl) recvIcmp() {
 		}
 	}(fd)
 
-	// 绑定本地地址
+	// Bind local address
 	addr := syscall.SockaddrInet4{Port: 0, Addr: [4]byte{0, 0, 0, 0}}
 	err = syscall.Bind(fd, &addr)
 	if err != nil {
 		panic(err)
 	}
 
-	// 接收ICMP报文
+	// Receive ICMP packets
 	for {
 		buf := make([]byte, 1500)
 		n, _, err := syscall.Recvfrom(fd, buf, 0)

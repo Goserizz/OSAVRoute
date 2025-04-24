@@ -78,7 +78,6 @@ func (p *DNSPoolSpoofSame) send() {
 	bindAddr := &syscall.SockaddrLinklayer{Protocol: syscall.ETH_P_IP, Ifindex: iface.Index}
 
 	// IP Header
-	// srcIp := net.ParseIP(p.srcIpStr)
 	ipv4Hdr := make([]byte, IPV4_HDR_SIZE)
 	ipv4Hdr[0] = 0x45 // Vesrion = 4 | header length = 5
 	// [1]	 TOS
@@ -156,8 +155,6 @@ func (p *DNSPoolSpoofSame) send() {
 		}
 
 		// Complete IPv4 Header
-		// Invert the last bit of dstIp to get srcIp
-
 		dstIpHigh := uint32(binary.BigEndian.Uint16(dstIp[0:2]))
 		dstIpLow := uint32(binary.BigEndian.Uint16(dstIp[2:4]))
 
@@ -196,9 +193,5 @@ func (p *DNSPoolSpoofSame) GetIcmp() (
 	string,
 	uint8,
 ) {
-	// Implementation of GetIcmp method
-	// This method should return three values: string, string, uint8
-	// You can implement the logic to return these values based on your requirements
-	// For now, we'll return empty strings and a default uint8 value
 	return "", "", 0
 }

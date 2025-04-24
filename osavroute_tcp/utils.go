@@ -66,16 +66,16 @@ func AddrToFs(filename string, strAddr string) {
 }
 
 func GetDefaultRouteInterface() (string, error) {
-	// 获取路由表
+	// Get routing table
 	routes, err := netlink.RouteList(nil, netlink.FAMILY_ALL)
 	if err != nil {
 		return "", err
 	}
 
 	for _, route := range routes {
-		// 检查是否为默认路由 (0.0.0.0/0 或 ::/0)
+		// Check if it's the default route (0.0.0.0/0 or ::/0)
 		if route.Dst == nil {
-			// 获取与默认路由关联的网卡
+			// Get the network interface associated with the default route
 			link, err := netlink.LinkByIndex(route.LinkIndex)
 			if err != nil {
 				return "", err
@@ -137,7 +137,7 @@ func IsBogon(decIp uint64) bool {
 	} // 240.0.0.0/4
 }
 
-// GetDefaultGateway 获取默认网关的IP地址
+// GetDefaultGateway Gets the IP address of the default gateway
 func GetDefaultGateway() (string, error) {
 	cmd := exec.Command("ip", "route", "show", "default")
 	var out bytes.Buffer
@@ -152,7 +152,7 @@ func GetDefaultGateway() (string, error) {
 	return route[2], nil
 }
 
-// GetMACAddress 获取MAC地址
+// GetMACAddress Gets the MAC address
 func GetMACAddress(ip string) (string, error) {
 	cmd := exec.Command("arp", "-n", ip)
 	var out bytes.Buffer

@@ -287,9 +287,6 @@ func (p *DNSPoolSlow) recvDns() {
 		}
 
 		// Resolve UDP header
-		// localPort := binary.BigEndian.Uint16(buf[22:24])
-		// remotePort := binary.BigEndian.Uint16(buf[20:22])
-		// if remotePort != REMOTE_PORT { continue }
 		txId := binary.BigEndian.Uint16(buf[28:30])
 		if txId != TRANSACTION_ID {
 			continue
@@ -311,14 +308,14 @@ func (p *DNSPoolSlow) recvDns() {
 func (p *DNSPoolSlow) recvIcmp() {
 	STATELESS_QRY_SIZE_SLOW := uint32(STATELESS_RAND_LEN_SLOW + FORMAT_TTL_LEN + STATELESS_FORMAT_IPV4_LEN_SLOW + len(p.domain) + 5 + 4)
 	STATELESS_IPV4_LEN_SLOW := uint16(IPV4_HDR_SIZE + UDP_HDR_SIZE + DNS_HDR_SIZE + STATELESS_QRY_SIZE_SLOW)
-	// 创建原始套接字
+	// Create raw socket
 	fd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
 	if err != nil {
 		panic(err)
 	}
 	defer syscall.Close(fd)
 
-	// 绑定本地地址
+	// Bind local address
 	addr := syscall.SockaddrInet4{Port: 0, Addr: [4]byte{0, 0, 0, 0}}
 	err = syscall.Bind(fd, &addr)
 	if err != nil {
@@ -326,7 +323,7 @@ func (p *DNSPoolSlow) recvIcmp() {
 	}
 
 	ipv4LenUint8 := uint8(STATELESS_IPV4_LEN_SLOW)
-	// 接收ICMP报文
+	// Receive ICMP packets
 	for {
 		buf := make([]byte, 1500)
 		_, addr, err := syscall.Recvfrom(fd, buf, 0)

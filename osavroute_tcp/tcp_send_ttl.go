@@ -149,7 +149,7 @@ func (p *TCPoolTtl) calCks(dstIp []byte, ttl uint8) uint16 {
 
 func (p *TCPoolTtl) send() {
 	defer p.wg.Done()
-	// 创建原始套接字
+	// Create raw socket
 	fd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, syscall.ETH_P_IP)
 	if err != nil {
 		log.Fatalf("Socket error: %v\n", err)
@@ -231,8 +231,6 @@ func (p *TCPoolTtl) send() {
 		binary.BigEndian.PutUint16(pkt[24:26], ipv4Cks)
 
 		// Complete TCP Header
-		// binary.BigEndian.PutUint16(pkt[34:36], BasePort+uint16(ttl)) // encode ttl in Src Port
-		// copy(pkt[38:42], dstIp)                                      // encode dstIp in Seq Num
 		copy(pkt[34:36], dstIp[0:2])  // encode high 16 bits of dstIp in Src Port
 		copy(pkt[38:40], dstIp[2:4])  // encode low 16 bits of dstIp in high 16 bits of Seq Num
 		binary.BigEndian.PutUint16(pkt[40:42], uint16(ttl))  // encode ttl in low 16 bits of Seq Num
@@ -248,59 +246,6 @@ func (p *TCPoolTtl) send() {
 	}
 }
 
-// func (p *TCPoolTtl) recvTcp() {
-// 	fd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.ETH_P_IP)
-// 	if err != nil {
-// 		log.Fatalf("Socket error: %v\n", err)
-// 	}
-// 	defer func(fd int) {
-// 		err := syscall.Close(fd)
-// 		if err != nil {
-// 			panic(err)
-// 		}
-// 	}(fd)
-
-// 	for {
-// 		buf := make([]byte, 54)
-// 		_, _, err := syscall.Recvfrom(fd, buf, 0)
-// 		if p.finish {
-// 			break
-// 		}
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-// 		p.tcpParseChan <- buf
-// 	}
-// }
-
-// func (p *TCPoolTtl) parseTcp() {
-// 	for {
-// 		buf, ok := <-p.tcpParseChan
-// 		if !ok || p.finish {
-// 			break
-// 		}
-// 		// localPort := binary.BigEndian.Uint16(buf[36:38])
-// 		remotePort := binary.BigEndian.Uint16(buf[34:36])
-// 		flag := buf[47]
-// 		if flag != (SynFlag | AckFlag) {
-// 			continue
-// 		}
-// 		realIpStr := fmt.Sprintf("%d.%d.%d.%d", buf[26], buf[27], buf[28], buf[29])
-// 		// ackNum := binary.BigEndian.Uint32(buf[42:46])
-// 		// targetIpBytes := make([]byte, 4)
-// 		// binary.BigEndian.PutUint32(targetIpBytes, ackNum-1)
-// 		// targetIpStr := fmt.Sprintf("%d.%d.%d.%d", targetIpBytes[0], targetIpBytes[1], targetIpBytes[2], targetIpBytes[3])
-// 		targetIpStr := fmt.Sprintf("%d.%d.%d.%d", buf[36], buf[37], buf[42], buf[43])
-// 		ttl := uint8(binary.BigEndian.Uint16(buf[44:46]) - 1)
-// 		p.outTcpChan <- TCPTtlResponse{
-// 			Target: targetIpStr,
-// 			Real:   realIpStr,
-// 			Port:   remotePort,
-// 			Ttl:    ttl,
-// 		}
-// 	}
-// }
-
 func (p *TCPoolTtl) recvIcmp() {
 	defer p.wg.Done()
 	fd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
@@ -314,7 +259,7 @@ func (p *TCPoolTtl) recvIcmp() {
 		}
 	}(fd)
 
-	// 绑定本地地址
+	// Bind local address
 	addr := syscall.SockaddrInet4{Port: 0, Addr: [4]byte{0, 0, 0, 0}}
 	err = syscall.Bind(fd, &addr)
 	if err != nil {
@@ -360,7 +305,6 @@ func (p *TCPoolTtl) parseIcmp() {
 		targetIpStr := fmt.Sprintf("%d.%d.%d.%d", buf[48], buf[49], buf[52], buf[53])
 		realIpStr := fmt.Sprintf("%d.%d.%d.%d", buf[44], buf[45], buf[46], buf[47])
 		ttl := uint8(binary.BigEndian.Uint16(buf[54:56]))
-		// fmt.Println(targetIpStr, realIpStr, resIpStr, remotePort, ttl)
 		p.outIcmpChan <- ICMPTtlResponse{
 			Target: targetIpStr,
 			Real:   realIpStr,

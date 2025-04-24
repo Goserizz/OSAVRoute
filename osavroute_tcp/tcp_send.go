@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 	"log"
 	"net"
+	"sync"
 	"syscall"
 	"time"
-	"sync"
 )
 
 const (
@@ -50,7 +50,7 @@ type TCPoolv4 struct {
 	dstMac         []byte
 	ttl            uint8
 	finish         bool
-	wg			   sync.WaitGroup
+	wg             sync.WaitGroup
 }
 
 func NewTCPoolv4(remotePort uint16, bufSize int, localPort uint16, iface, srcIpStr string, srcMac []byte, dstMac []byte, ttl uint8) *TCPoolv4 {
@@ -90,7 +90,7 @@ func NewTCPoolv4(remotePort uint16, bufSize int, localPort uint16, iface, srcIpS
 		dstMac:         dstMac,
 		ttl:            ttl,
 		finish:         false,
-		wg:			    sync.WaitGroup{},
+		wg:             sync.WaitGroup{},
 	}
 	p.wg.Add(3)
 	go p.send()
@@ -142,7 +142,7 @@ func (p *TCPoolv4) calCks(dstIp []byte) (uint16, uint16) {
 
 func (p *TCPoolv4) send() {
 	defer p.wg.Done()
-	// 创建原始套接字
+	// Create raw socket
 	fd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, syscall.ETH_P_IP)
 	if err != nil {
 		log.Fatalf("Socket error: %v\n", err)
@@ -215,20 +215,14 @@ func (p *TCPoolv4) send() {
 		ipv4Cks, tcpCks := p.calCks(dstIp)
 
 		// Complete IP Header
-		// copy(ipv4Hdr[16:20], dstIp)
 		copy(pkt[30:34], dstIp)
-		// binary.BigEndian.PutUint16(ipv4Hdr[10:12], p.calIpv4Cks(dstIp))
 		binary.BigEndian.PutUint16(pkt[24:26], ipv4Cks)
 
 		// Complete TCP Header
-		// copy(tcpHdr[4:8], dstIp)
 		copy(pkt[38:42], dstIp)
-		// binary.BigEndian.PutUint16(tcpHdr[16:18], p.calTcpCks(dstIp))
 		binary.BigEndian.PutUint16(pkt[50:52], tcpCks)
 
 		// Send the Packet
-		// pkt := append(macHdr, ipv4Hdr...)
-		// pkt  = append(pkt, tcpHdr...)
 		for {
 			if err := syscall.Sendto(fd, pkt, 0, bindAddr); err == nil {
 				break
@@ -282,7 +276,7 @@ func (p *TCPoolv4) recvTcp() {
 
 func (p *TCPoolv4) recvIcmp() {
 	defer p.wg.Done()
-	// 创建原始套接字
+	// Create raw socket
 	fd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
 	if err != nil {
 		panic(err)
@@ -294,14 +288,14 @@ func (p *TCPoolv4) recvIcmp() {
 		}
 	}(fd)
 
-	// 绑定本地地址
+	// Bind local address
 	addr := syscall.SockaddrInet4{Port: 0, Addr: [4]byte{0, 0, 0, 0}}
 	err = syscall.Bind(fd, &addr)
 	if err != nil {
 		panic(err)
 	}
 
-	// 接收ICMP报文
+	// Receive ICMP packets
 	for {
 		buf := make([]byte, 1500)
 		_, addr, err := syscall.Recvfrom(fd, buf, 0)
