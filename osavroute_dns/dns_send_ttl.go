@@ -31,7 +31,12 @@ type DNSPoolTtl struct {
 	shard         uint16
 }
 
-func NewDNSPoolTtl(nSender, bufSize int, srcIpStr string, ifaceName string, srcMac, dstMac []byte, shards, shard uint16) *DNSPoolTtl {
+func NewDNSPoolTtl(
+	nSender, bufSize int,
+	srcIpStr, ifaceName string,
+	srcMac, dstMac []byte,
+	shards, shard uint16,
+) *DNSPoolTtl {
 	dnsPool := &DNSPoolTtl{
 		inIpChan:      make(chan []byte, bufSize),
 		inTtlChan:     make(chan uint8, bufSize),
@@ -54,7 +59,10 @@ func NewDNSPoolTtl(nSender, bufSize int, srcIpStr string, ifaceName string, srcM
 	return dnsPool
 }
 
-func (p *DNSPoolTtl) Add(dstIp []byte, ttl uint8) {
+func (p *DNSPoolTtl) Add(
+	dstIp []byte,
+	ttl uint8,
+) {
 	if p.finish {
 		return
 	}
@@ -62,7 +70,12 @@ func (p *DNSPoolTtl) Add(dstIp []byte, ttl uint8) {
 	p.inTtlChan <- ttl
 }
 
-func (p *DNSPoolTtl) GetIcmp() (string, string, string, uint8) {
+func (p *DNSPoolTtl) GetIcmp() (
+	string,
+	string,
+	string,
+	uint8,
+) {
 	select {
 	case icmpResp, ok := <-p.outIcmpChan:
 		if !ok || p.finish {
@@ -74,7 +87,11 @@ func (p *DNSPoolTtl) GetIcmp() (string, string, string, uint8) {
 	}
 }
 
-func (p *DNSPoolTtl) LenInChan() (int, int, int) {
+func (p *DNSPoolTtl) LenInChan() (
+	int,
+	int,
+	int,
+) {
 	return len(p.inIpChan), len(p.icmpParseChan), len(p.outIcmpChan)
 }
 
@@ -123,22 +140,10 @@ func (p *DNSPoolTtl) send() {
 
 	// UDP Header
 	udpHdrBuf := new(bytes.Buffer)
-	err = binary.Write(udpHdrBuf, binary.BigEndian, uint16(0)) // local port
-	if err != nil {
-		panic(err)
-	}
-	err = binary.Write(udpHdrBuf, binary.BigEndian, uint16(53)) // remote port
-	if err != nil {
-		panic(err)
-	}
-	err = binary.Write(udpHdrBuf, binary.BigEndian, uint16(0)) // length
-	if err != nil {
-		panic(err)
-	}
-	err = binary.Write(udpHdrBuf, binary.BigEndian, uint16(0)) // checksum
-	if err != nil {
-		panic(err)
-	}
+	binary.Write(udpHdrBuf, binary.BigEndian, uint16(0))  // local port
+	binary.Write(udpHdrBuf, binary.BigEndian, uint16(53)) // remote port
+	binary.Write(udpHdrBuf, binary.BigEndian, uint16(0))  // length
+	binary.Write(udpHdrBuf, binary.BigEndian, uint16(0))  // checksum
 
 	udpHdr := udpHdrBuf.Bytes()
 
@@ -164,7 +169,6 @@ func (p *DNSPoolTtl) send() {
 		if !ok || p.finish {
 			break
 		}
-		// dstIp := net.ParseIP(dstIpStr).To4()
 		dstIpHigh := uint32(binary.BigEndian.Uint16(dstIp[0:2]))
 		dstIpLow := uint32(binary.BigEndian.Uint16(dstIp[2:4]))
 
@@ -176,10 +180,7 @@ func (p *DNSPoolTtl) send() {
 		binary.BigEndian.PutUint16(packet[24:26], uint16(^(ipv4NowCks + (ipv4NowCks >> 16))))
 
 		// Complete UDP Header
-		// binary.BigEndian.PutUint16(packet[34:36], BASE_PORT + uint16(ttl))  // encode ttl in source port
-		// copy(packet[34:36], dstIp[2:4])  // encode low 16 bits in source port
 		binary.BigEndian.PutUint16(packet[34:36], uint16(dstIpLow>>p.shards)+BASE_PORT)
-		// copy(packet[38:40], dstIp[2:4])  // encode low 16 bits in udp length
 		packet[39] = ttl // encode ttl in length
 
 		// Send packet

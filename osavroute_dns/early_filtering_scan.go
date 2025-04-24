@@ -14,7 +14,20 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func EealyFilteringScan(srcIpStr, ifaceName, inputFile, outputFile, dnsFile, randPfx string, startTtl, endTtl uint8, pps int, srcMac, dstMac []byte) {
+func EealyFilteringScan(
+	srcIpStr string,
+	ifaceName string,
+	inputFile string,
+	outputFile string,
+	dnsFile string,
+	randPfx string,
+	domain string,
+	startTtl uint8,
+	endTtl uint8,
+	pps int,
+	srcMac []byte,
+	dstMac []byte,
+) {
 	os.Remove(outputFile)
 	os.Remove(dnsFile)
 	dstIpStrArr := ReadLineAddr6FromFS(inputFile)
@@ -23,9 +36,9 @@ func EealyFilteringScan(srcIpStr, ifaceName, inputFile, outputFile, dnsFile, ran
 	finish := false
 	fmt.Println("Random Prefix:", randPfx)
 	fmt.Println("Press Enter to continue...")
-	pNormal := NewDNSPoolNormal(srcIpStr, ifaceName, srcMac, dstMac, randPfx)
-	pSpoof := NewDNSPoolSpoof(srcIpStr, ifaceName, srcMac, dstMac, randPfx)
-	pSpoofSame := NewDNSPoolSpoofSame(srcIpStr, ifaceName, srcMac, dstMac, randPfx)
+	pNormal := NewDNSPoolNormal(srcIpStr, ifaceName, randPfx, domain, srcMac, dstMac)
+	pSpoof := NewDNSPoolSpoof(srcIpStr, ifaceName, randPfx, domain, srcMac, dstMac)
+	pSpoofSame := NewDNSPoolSpoofSame(srcIpStr, ifaceName, randPfx, domain, srcMac, dstMac)
 	go func() {
 		for {
 			targetIp, res, ttl := pNormal.GetIcmp()
@@ -88,7 +101,15 @@ func EealyFilteringScan(srcIpStr, ifaceName, inputFile, outputFile, dnsFile, ran
 	time.Sleep(10 * time.Second)
 }
 
-func BlockingGranScan(ifaceName, inputFile, randPfx string, pps int, srcMac, dstMac []byte) {
+func BlockingGranScan(
+	ifaceName string,
+	inputFile string,
+	randPfx string,
+	domain string,
+	pps int,
+	srcMac []byte,
+	dstMac []byte,
+) {
 	file, err := os.Open(inputFile)
 	if err != nil {
 		panic(err)
@@ -105,7 +126,7 @@ func BlockingGranScan(ifaceName, inputFile, randPfx string, pps int, srcMac, dst
 
 	fmt.Println("Random Prefix:", randPfx)
 	fmt.Println("Press Enter to continue...")
-	spoofSender := NewDNSPoolSpoofAny(ifaceName, srcMac, dstMac, randPfx)
+	spoofSender := NewDNSPoolSpoofAny(ifaceName, randPfx, domain, srcMac, dstMac)
 	limiter := rate.NewLimiter(rate.Limit(pps), pps)
 	bar := progressbar.Default(int64(len(ips)*25), "Scanning Spoof Range...")
 	for _range := uint8(31); _range > 7; _range-- {

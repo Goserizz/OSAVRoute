@@ -31,9 +31,19 @@ type DNSPoolSlow struct {
 	ttl              uint8
 	finish           bool
 	nSender          int
+	domain           string
 }
 
-func NewDNSPoolSlow(nSender, bufSize int, srcIpStr string, ifaceName string, srcMac, dstMac []byte, ttl uint8) *DNSPoolSlow {
+func NewDNSPoolSlow(
+	nSender int,
+	bufSize int,
+	srcIpStr string,
+	ifaceName string,
+	domain string,
+	srcMac []byte,
+	dstMac []byte,
+	ttl uint8,
+) *DNSPoolSlow {
 	p := &DNSPoolSlow{
 		inIpChan:         make(chan []byte, bufSize),
 		outIcmpChan:      make(chan *ICMPResponse, bufSize),
@@ -46,6 +56,7 @@ func NewDNSPoolSlow(nSender, bufSize int, srcIpStr string, ifaceName string, src
 		ttl:              ttl,
 		finish:           false,
 		nSender:          nSender,
+		domain:           domain,
 	}
 	for i := 0; i < nSender; i++ {
 		go p.send()
@@ -55,7 +66,9 @@ func NewDNSPoolSlow(nSender, bufSize int, srcIpStr string, ifaceName string, src
 	return p
 }
 
-func (p *DNSPoolSlow) Add(dstIp []byte) {
+func (p *DNSPoolSlow) Add(
+	dstIp []byte,
+) {
 	if p.finish {
 		return
 	}
@@ -74,7 +87,10 @@ func (p *DNSPoolSlow) GetIcmp() *ICMPResponse {
 	}
 }
 
-func (p *DNSPoolSlow) GetDns() (string, string) {
+func (p *DNSPoolSlow) GetDns() (
+	string,
+	string,
+) {
 	select {
 	case targetIp, ok := <-p.outDnsTargetChan:
 		if !ok || p.finish {
@@ -91,6 +107,8 @@ func (p *DNSPoolSlow) LenInChan() int {
 }
 
 func (p *DNSPoolSlow) send() {
+	STATELESS_QRY_SIZE_SLOW := uint32(STATELESS_RAND_LEN_SLOW + FORMAT_TTL_LEN + STATELESS_FORMAT_IPV4_LEN_SLOW + len(p.domain) + 5 + 4)
+	STATELESS_IPV4_LEN_SLOW := uint16(IPV4_HDR_SIZE + UDP_HDR_SIZE + DNS_HDR_SIZE + STATELESS_QRY_SIZE_SLOW)
 	// Create IPv6 raw socket
 	fd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, syscall.ETH_P_IP)
 	if err != nil {
@@ -149,7 +167,7 @@ func (p *DNSPoolSlow) send() {
 
 	// construct DNS Query
 	randPfx := GetDomainRandPfx(STATELESS_RAND_LEN_SLOW)
-	preDomain := randPfx + "." + fmt.Sprintf("%02d", p.ttl) + "." + STATELESS_FORMAT_IPV4_SLOW + "." + STATELESS_DOMAIN
+	preDomain := randPfx + "." + fmt.Sprintf("%02d", p.ttl) + "." + STATELESS_FORMAT_IPV4_SLOW + "." + p.domain
 	dnsQryBuf := new(bytes.Buffer)
 	sections := strings.Split(preDomain, ".")
 	for _, s := range sections {
@@ -185,8 +203,17 @@ func (p *DNSPoolSlow) send() {
 	for i := 0; i < 2+STATELESS_RAND_LEN_SLOW+FORMAT_TTL_LEN; i += 2 {
 		udpCks += uint32(binary.BigEndian.Uint16(dnsQry[i : i+2]))
 	}
-	for i := 3 + STATELESS_RAND_LEN_SLOW + FORMAT_TTL_LEN + STATELESS_FORMAT_IPV4_LEN_SLOW; i < STATELESS_QRY_SIZE_SLOW; i += 2 {
+	// Process full 16-bit words
+	endIndex := int(STATELESS_QRY_SIZE_SLOW)
+	for i := 3 + STATELESS_RAND_LEN_SLOW + FORMAT_TTL_LEN + STATELESS_FORMAT_IPV4_LEN_SLOW; i < endIndex-1; i += 2 {
 		udpCks += uint32(binary.BigEndian.Uint16(dnsQry[i : i+2]))
+	}
+
+	// Handle odd byte if present
+	startOffset := 3 + STATELESS_RAND_LEN_SLOW + FORMAT_TTL_LEN + STATELESS_FORMAT_IPV4_LEN_SLOW
+	if endIndex > startOffset && (endIndex-startOffset)%2 != 0 {
+		lastByte := dnsQry[endIndex-1]
+		udpCks += uint32(uint16(lastByte) << 8)
 	}
 
 	// Combine IPv6 header, UDP header, DNS header, DNS query
@@ -246,6 +273,8 @@ func (p *DNSPoolSlow) recvDns() {
 		panic(err)
 	}
 
+	domainLen := STATELESS_RAND_LEN_SLOW + FORMAT_TTL_LEN + STATELESS_FORMAT_IPV4_LEN_SLOW + len(p.domain) + 4
+
 	// Read packets
 	for {
 		buf := make([]byte, 65536)
@@ -271,7 +300,7 @@ func (p *DNSPoolSlow) recvDns() {
 		if len(question.Name) == 0 {
 			continue
 		}
-		if len(question.Name) != STATELESS_IPV4_TTL_DOMAIN_LEN_SLOW {
+		if len(question.Name) != domainLen {
 			continue
 		}
 		p.outDnsTargetChan <- DeformatIpv4(question.Name[2+STATELESS_RAND_LEN_SLOW+FORMAT_TTL_LEN:][:STATELESS_FORMAT_IPV4_LEN_SLOW])
@@ -280,6 +309,8 @@ func (p *DNSPoolSlow) recvDns() {
 }
 
 func (p *DNSPoolSlow) recvIcmp() {
+	STATELESS_QRY_SIZE_SLOW := uint32(STATELESS_RAND_LEN_SLOW + FORMAT_TTL_LEN + STATELESS_FORMAT_IPV4_LEN_SLOW + len(p.domain) + 5 + 4)
+	STATELESS_IPV4_LEN_SLOW := uint16(IPV4_HDR_SIZE + UDP_HDR_SIZE + DNS_HDR_SIZE + STATELESS_QRY_SIZE_SLOW)
 	// 创建原始套接字
 	fd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_ICMP)
 	if err != nil {
@@ -324,4 +355,8 @@ func (p *DNSPoolSlow) Finish() {
 	close(p.outIcmpChan)
 	close(p.outDnsTargetChan)
 	close(p.outDnsRealChan)
+}
+
+func (p *DNSPoolSlow) IsFinished() bool {
+	return p.finish
 }

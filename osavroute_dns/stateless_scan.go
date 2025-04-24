@@ -25,10 +25,19 @@ const (
 )
 
 func StatelessScan(
-	srcIpStr, ifaceName, inFile, outFile, natFile, dnsFile string,
-	startTtl, endTtl uint8,
-	nSender, pps int,
-	srcMac, dstMac []byte,
+	srcIpStr string,
+	ifaceName string,
+	inFile string,
+	outFile string,
+	natFile string,
+	dnsFile string,
+	domain string,
+	startTtl uint8,
+	endTtl uint8,
+	nSender int,
+	pps int,
+	srcMac []byte,
+	dstMac []byte,
 ) {
 	file, err := os.Create(outFile)
 	if err != nil {
@@ -68,7 +77,7 @@ func StatelessScan(
 	}
 	counter := 0
 	for ttl := startTtl; ttl <= endTtl; ttl++ {
-		p := NewDNSPoolSlow(nSender, BufSize, srcIpStr, ifaceName, srcMac, dstMac, ttl)
+		p := NewDNSPoolSlow(nSender, BufSize, srcIpStr, ifaceName, domain, srcMac, dstMac, ttl)
 		bar.Describe(fmt.Sprintf("Scanning TTL=%d...", ttl))
 		finish := false
 
@@ -143,11 +152,21 @@ func StatelessScan(
 }
 
 func StatelessScanWithForwarder(
-	srcMac, dstMac []byte,
-	srcIpStr, ifaceName, outDir string,
-	startTtl, endTtl uint8,
-	pps, nSender int,
-	startFileNo, endFileNo, nSeg, shards, shard uint64,
+	srcMac []byte,
+	dstMac []byte,
+	srcIpStr string,
+	ifaceName string,
+	outDir string,
+	domain string,
+	startTtl uint8,
+	endTtl uint8,
+	pps int,
+	nSender int,
+	startFileNo uint64,
+	endFileNo uint64,
+	nSeg uint64,
+	shards uint64,
+	shard uint64,
 ) {
 	if startFileNo == 0xffffffffffffffff {
 		if _, err := os.Stat(outDir); !os.IsNotExist(err) {
@@ -348,7 +367,7 @@ func StatelessScanWithForwarder(
 			panic(err)
 		}
 
-		pSlow := NewDNSPoolSlow(nSender, 10000, srcIpStr, ifaceName, srcMac, dstMac, 99)
+		pSlow := NewDNSPoolSlow(nSender, 10000, srcIpStr, ifaceName, domain, srcMac, dstMac, 99)
 		go func() {
 			for {
 				targetIp, realIp := pSlow.GetDns()

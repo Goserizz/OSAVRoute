@@ -17,7 +17,9 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-func ReadLineAddr6FromFS(filename string) []string {
+func ReadLineAddr6FromFS(
+	filename string,
+) []string {
 	var strAddrs []string
 	f, err := os.Open(filename)
 	if err != nil {
@@ -36,7 +38,10 @@ func ReadLineAddr6FromFS(filename string) []string {
 	return strAddrs
 }
 
-func Append1Addr6ToFS(filename string, strAddr string) {
+func Append1Addr6ToFS(
+	filename string,
+	strAddr string,
+) {
 	if filename == "" {
 		return
 	}
@@ -61,7 +66,10 @@ type DNSQuestion struct {
 	Class uint16
 }
 
-func ParseDNSQuestion(buffer []byte, offset int) (DNSQuestion, int) {
+func ParseDNSQuestion(
+	buffer []byte,
+	offset int,
+) (DNSQuestion, int) {
 	// 读取question的name字段
 	name, bytesRead := readName(buffer, offset)
 	offset += bytesRead
@@ -81,7 +89,10 @@ func ParseDNSQuestion(buffer []byte, offset int) (DNSQuestion, int) {
 	return question, offset
 }
 
-func readName(buffer []byte, offset int) (string, int) {
+func readName(
+	buffer []byte,
+	offset int,
+) (string, int) {
 	var name string
 	var bytesRead int
 
@@ -127,7 +138,9 @@ func readName(buffer []byte, offset int) (string, int) {
 	return name, bytesRead
 }
 
-func CalCksum(data []byte) uint16 {
+func CalCksum(
+	data []byte,
+) uint16 {
 	var (
 		sum    uint32
 		length = len(data)
@@ -153,7 +166,10 @@ func CalCksum(data []byte) uint16 {
 	return uint16(^sum)
 }
 
-func GetDefaultRouteInterface() (string, error) {
+func GetDefaultRouteInterface() (
+	string,
+	error,
+) {
 	// 获取路由表
 	routes, err := netlink.RouteList(nil, netlink.FAMILY_ALL)
 	if err != nil {
@@ -175,7 +191,14 @@ func GetDefaultRouteInterface() (string, error) {
 	return "", errors.New("default route not found")
 }
 
-func GetIface(interfaceName string) ([]string, []string, []byte, error) {
+func GetIface(
+	interfaceName string,
+) (
+	[]string,
+	[]string,
+	[]byte,
+	error,
+) {
 	iface, err := net.InterfaceByName(interfaceName)
 	if err != nil {
 		return nil, nil, nil, err
@@ -204,7 +227,9 @@ func GetIface(interfaceName string) ([]string, []string, []byte, error) {
 	return ipv4Addrs, ipv6Addrs, iface.HardwareAddr, nil
 }
 
-func SplitIPStr(ipStr string) []string {
+func SplitIPStr(
+	ipStr string,
+) []string {
 	if ipStr[len(ipStr)-1] == ':' {
 		ipStr = ipStr[:len(ipStr)-1]
 	}
@@ -228,12 +253,16 @@ func SplitIPStr(ipStr string) []string {
 	return ipFullSeg
 }
 
-func GetFullIP(ipStr string) string {
+func GetFullIP(
+	ipStr string,
+) string {
 	ipFullSeg := SplitIPStr(ipStr)
 	return strings.Join(ipFullSeg, ":")
 }
 
-func FormatIpv4(ipv4 string) string {
+func FormatIpv4(
+	ipv4 string,
+) string {
 	var formatParts []string
 	for _, part := range strings.Split(ipv4, ".") {
 		for len(part) < 3 {
@@ -244,7 +273,9 @@ func FormatIpv4(ipv4 string) string {
 	return strings.Join(formatParts, ":")
 }
 
-func DeformatIpv4(ipv4 string) string {
+func DeformatIpv4(
+	ipv4 string,
+) string {
 	var deformatParts []string
 	for _, part := range strings.Split(ipv4, ":") {
 		for part[0] == '0' && len(part) > 1 {
@@ -255,7 +286,9 @@ func DeformatIpv4(ipv4 string) string {
 	return strings.Join(deformatParts, ".")
 }
 
-func IsBogon(dec_ip uint64) bool {
+func IsBogon(
+	dec_ip uint64,
+) bool {
 	if ((dec_ip & 0xFF000000) == 0x00000000) || // 0.0.0.0/8
 		((dec_ip & 0xFF000000) == 0x0A000000) || // 10.0.0.0/8
 		((dec_ip & 0xFFC00000) == 0x64400000) || // 100.64.0.0/10
@@ -277,7 +310,10 @@ func IsBogon(dec_ip uint64) bool {
 }
 
 // 获取默认网关的IP地址
-func GetDefaultGateway() (string, error) {
+func GetDefaultGateway() (
+	string,
+	error,
+) {
 	cmd := exec.Command("ip", "route", "show", "default")
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -292,7 +328,12 @@ func GetDefaultGateway() (string, error) {
 }
 
 // 获取MAC地址
-func GetMACAddress(ip string) (string, error) {
+func GetMACAddress(
+	ip string,
+) (
+	string,
+	error,
+) {
 	cmd := exec.Command("arp", "-n", ip)
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -310,11 +351,18 @@ func GetMACAddress(ip string) (string, error) {
 	return fields[2], nil
 }
 
-func ipToHex(ip []byte) string {
+func ipToHex(
+	ip []byte,
+) string {
 	return fmt.Sprintf("%02x%02x%02x%02x", ip[0], ip[1], ip[2], ip[3])
 }
 
-func hexToIp(hexStr string) (string, error) {
+func hexToIp(
+	hexStr string,
+) (
+	string,
+	error,
+) {
 	ip, err := hex.DecodeString(hexStr)
 	if err != nil {
 		return "", err
@@ -325,7 +373,9 @@ func hexToIp(hexStr string) (string, error) {
 	return fmt.Sprintf("%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]), nil
 }
 
-func GetDomainRandPfx(randLen int) string {
+func GetDomainRandPfx(
+	randLen int,
+) string {
 	randSuffixBytes := make([]byte, randLen)
 	for i := range randSuffixBytes {
 		randSuffixBytes[i] = CHARS[rand.Intn(len(CHARS))]
@@ -333,7 +383,9 @@ func GetDomainRandPfx(randLen int) string {
 	return string(randSuffixBytes)
 }
 
-func GetDomainRandNumPfx(randLen int) string {
+func GetDomainRandNumPfx(
+	randLen int,
+) string {
 	randSuffixBytes := make([]byte, randLen)
 	for i := range randSuffixBytes {
 		randSuffixBytes[i] = CHARS_NUM[rand.Intn(len(CHARS_NUM))]

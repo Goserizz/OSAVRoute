@@ -24,6 +24,7 @@ var (
 	endFileNo   = flag.Uint64("eno", 0xffffffffffffffff, "The No. of file end with.")
 	mode        = flag.String("mode", "stateless", "`early` for early-filtering scanning or `stateless` or stateless scanning or `gran` for blocking granularity scanning.")
 	randPfx     = flag.String("rand", "123456789", "The random prefix for domain.")
+	domain      = flag.String("domain", "example.com", "The domain used for scanning.")
 )
 
 func main() {
@@ -65,14 +66,14 @@ func main() {
 		}
 
 		if *inputFile != "" {
-			StatelessScan(srcIpStr, *iface, *inputFile, *outputFile, *natFile, *dnsFile, uint8(*startTTL), uint8(*endTTL), *nSend, *pps, srcMac, dstMac)
+			StatelessScan(srcIpStr, *iface, *inputFile, *outputFile, *natFile, *dnsFile, *domain, uint8(*startTTL), uint8(*endTTL), *nSend, *pps, srcMac, dstMac)
 		} else {
-			StatelessScanWithForwarder(srcMac, dstMac, srcIpStr, *iface, *outputFile, uint8(*startTTL), uint8(*endTTL), *pps, *nSend, *startFileNo, *endFileNo, *nSeg, *shards, *shard)
+			StatelessScanWithForwarder(srcMac, dstMac, srcIpStr, *iface, *outputFile, *domain, uint8(*startTTL), uint8(*endTTL), *pps, *nSend, *startFileNo, *endFileNo, *nSeg, *shards, *shard)
 		}
 	} else if *mode == "early" {
-		EealyFilteringScan(srcIpStr, *iface, *inputFile, *outputFile, *dnsFile, *randPfx, uint8(*startTTL), uint8(*endTTL), *pps, srcMac, dstMac)
+		EealyFilteringScan(srcIpStr, *iface, *inputFile, *outputFile, *dnsFile, *randPfx, *domain, uint8(*startTTL), uint8(*endTTL), *pps, srcMac, dstMac)
 	} else if *mode == "gran" {
-		BlockingGranScan(*iface, *inputFile, *randPfx, *pps, srcMac, dstMac)
+		BlockingGranScan(*iface, *inputFile, *randPfx, *domain, *pps, srcMac, dstMac)
 	} else {
 		panic("Invalid mode!")
 	}

@@ -18,9 +18,16 @@ type DNSPoolSpoofAny struct {
 	dstMac      []byte
 	finish      bool
 	randPfx     string
+	domain      string
 }
 
-func NewDNSPoolSpoofAny(ifaceName string, srcMac, dstMac []byte, randPfx string) *DNSPoolSpoofAny {
+func NewDNSPoolSpoofAny(
+	ifaceName string,
+	randPfx string,
+	domain string,
+	srcMac []byte,
+	dstMac []byte,
+) *DNSPoolSpoofAny {
 	dnsPool := &DNSPoolSpoofAny{
 		inSrcChan:   make(chan []byte, BUF_SIZE),
 		inDstChan:   make(chan []byte, BUF_SIZE),
@@ -30,12 +37,17 @@ func NewDNSPoolSpoofAny(ifaceName string, srcMac, dstMac []byte, randPfx string)
 		dstMac:      dstMac,
 		finish:      false,
 		randPfx:     randPfx,
+		domain:      domain,
 	}
 	go dnsPool.send()
 	return dnsPool
 }
 
-func (p *DNSPoolSpoofAny) Add(srcIp []byte, dstIp []byte, _range uint8) {
+func (p *DNSPoolSpoofAny) Add(
+	srcIp []byte,
+	dstIp []byte,
+	_range uint8,
+) {
 	p.inSrcChan <- srcIp
 	p.inDstChan <- dstIp
 	p.inRangeChan <- _range
@@ -105,7 +117,7 @@ func (p *DNSPoolSpoofAny) send() {
 
 	// construct DNS Query
 	dnsQryBuf := new(bytes.Buffer)
-	formatDomain := p.randPfx + ".00.00000000.4." + EARLY_DOMAIN
+	formatDomain := p.randPfx + ".00.00000000.4." + p.domain
 	sections := strings.Split(formatDomain, ".")
 	for _, s := range sections {
 		binary.Write(dnsQryBuf, binary.BigEndian, byte(len(s))) // length
