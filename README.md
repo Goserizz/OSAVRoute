@@ -108,3 +108,6 @@ ADNS receives DNS queries for domains in the following format:
    ```bash
    osavroute_tcp -h
    ```
+
+# License
+This artifact is licensed under the [MIT License](LICENSE.txt).
