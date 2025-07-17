@@ -2,7 +2,7 @@
 
 Source IP address spoofing facilitates various malicious attacks, and Outbound Source Address Validation (OSAV) remains the best current practice for preventing spoofed packets from exiting a network. Accurately measuring OSAV deployment is essential for investigating the Internet’s vulnerability to IP spoofing. However, such measurements typically require sending spoofed packets from within the tested network, necessitating cooperation from network operators.
 
-OSAVRoute is the first non-cooperative system capable of capturing the fine-grained characteristics of OSAV deployment. Unlike existing non-cooperative methods that can only identify the ** presence ** and **absence** of OSAV, OSAVRoute identifies both the **presence** and **absence** of OSAV and further measures its **blocking granularity** and **blocking depth**, achieving capabilities previously limited to cooperative methods. OSAVRoute accomplishes this by explicitly tracing the forwarding paths of spoofed packets, enabling identification of their generation and propagation behavior.
+OSAVRoute is the first non-cooperative system capable of capturing the fine-grained characteristics of OSAV deployment. Unlike existing non-cooperative methods that can only identify the **presence** and **absence** of OSAV, OSAVRoute identifies both the **presence** and **absence** of OSAV and further measures its **blocking granularity** and **blocking depth**, achieving capabilities previously limited to cooperative methods. OSAVRoute accomplishes this by explicitly tracing the forwarding paths of spoofed packets, enabling identification of their generation and propagation behavior.
 
 # Compilation
 OSAVRoute with DNS can be compiled with
