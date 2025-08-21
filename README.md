@@ -111,3 +111,15 @@ ADNS receives DNS queries for domains in the following format:
 
 # License
 This artifact is licensed under the [MIT License](LICENSE.txt).
+
+# Cite this paper
+
+```
+@inproceedings{wang2025osavroute,
+  title={{OSAVRoute: Advancing Outbound Source Address Validation Deployment Detection with Non-Cooperative Measurement}},
+  author={Wang, Shuai and Li, Ruifeng and Chen, Li and Li, Dan and Qin, Lancheng and Cao, Qian},
+  booktitle={The Network and Distributed System Security (NDSS) Symposium 2026},
+  address={San Diego, CA, USA},
+  year={2026}
+}
+```
