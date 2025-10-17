@@ -138,32 +138,22 @@ func TCPRouteScanWithForwarder(srcIpStr, iface, outDir, blockFile string, startT
 				}
 			}
 		}
-		err := os.Mkdir(outDir, 0755)
-		if err != nil {
-			panic(err)
-		}
 		startFileNo = 0
 	}
+	if _, err := os.Stat(outDir); os.IsNotExist(err) && os.Mkdir(outDir, 0755) != nil {
+		panic(err)
+	}
 	tcpDir := filepath.Join(outDir, "tcp")
-	if _, err := os.Stat(tcpDir); os.IsNotExist(err) {
-		err := os.Mkdir(tcpDir, 0755)
-		if err != nil {
-			panic(err)
-		}
+	if _, err := os.Stat(tcpDir); os.IsNotExist(err) && os.Mkdir(tcpDir, 0755) != nil {
+		panic(err)
 	}
 	icmpDir := filepath.Join(outDir, "icmp")
-	if _, err := os.Stat(icmpDir); os.IsNotExist(err) {
-		err := os.Mkdir(icmpDir, 0755)
-		if err != nil {
-			panic(err)
-		}
+	if _, err := os.Stat(icmpDir); os.IsNotExist(err) && os.Mkdir(icmpDir, 0755) != nil {
+		panic(err)
 	}
 	icmpReDir := filepath.Join(outDir, "icmp-re")
-	if _, err := os.Stat(icmpReDir); os.IsNotExist(err) {
-		err := os.Mkdir(icmpReDir, 0755)
-		if err != nil {
-			panic(err)
-		}
+	if _, err := os.Stat(icmpReDir); os.IsNotExist(err) && os.Mkdir(icmpReDir, 0755) != nil {
+		panic(err)
 	}
 
 	limiter := rate.NewLimiter(rate.Limit(pps), BURST)

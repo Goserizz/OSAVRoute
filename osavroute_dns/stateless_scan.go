@@ -184,11 +184,11 @@ func StatelessScanWithForwarder(
 				}
 			}
 		}
-		err := os.Mkdir(outDir, 0755)
-		if err != nil {
-			panic(err)
-		}
 		startFileNo = 0
+	}
+	
+	if _, err := os.Stat(outDir); os.IsNotExist(err) && os.Mkdir(outDir, 0755) != nil {
+		panic(err)
 	}
 	dnsDir := filepath.Join(outDir, "dns")
 	if _, err := os.Stat(dnsDir); os.IsNotExist(err) && os.Mkdir(dnsDir, 0755) != nil {
